@@ -8,21 +8,29 @@
 import SwiftUI
 
 struct EmojiMemoryGameView: View {
-    var viewModel: EmojiMemoryGame
+    @ObservedObject var viewModel: EmojiMemoryGame
     
-    let emojis: Array<String>/*[String]*/ = ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙", "🙀", "👹", "😱", "☠️", "🍭"]
-    
+    //@ObservedObject basically says that if something changed,
+    //redraw me.
+
     var body: some View {
-        ScrollView {
-            cards
+        VStack {
+            ScrollView {
+                cards
+            }
+            Button("shuffle") {
+                viewModel.shuffle()
+            }
         }
+        .padding()
     }
     
     var cards: some View {
-        LazyVGrid (columns: [GridItem(.adaptive(minimum: 120))]){
-            ForEach(emojis.indices, id: \.self) { index in
-                CardView(content: emojis[index])
+        LazyVGrid (columns: [GridItem(.adaptive(minimum: 85), spacing: 0)], spacing: 0){
+            ForEach(viewModel.cards.indices, id: \.self) { index in
+                CardView(viewModel.cards[index])
                     .aspectRatio(2/3, contentMode: .fit)
+                    .padding(4)
             }
         }
         .foregroundColor(Color.orange)
@@ -31,28 +39,27 @@ struct EmojiMemoryGameView: View {
 //every var in a struct that's called has to be assigned a value,
 //either in its struct or in the call.
 struct CardView: View {
-    var content: String
-
-    @State var isFaceUp: Bool = false
+    let card: MemoryGame<String>.Card
+    
+    init(_ card: MemoryGame<String>.Card) {
+        self.card = card
+    }
+    
     var body: some View {
         ZStack (alignment: .top) {
             let base = RoundedRectangle(cornerRadius: 12) //an example of a local variable
             Group {
-                base
-                    .foregroundColor(.white)
-                base
-                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10,2]))
-                Text(content)
-                    .font(.largeTitle)
+                base.foregroundColor(.white)
+                base.strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10,2]))
+                Text(card.content)
+                    .font(.system(size: 200))
+                    .minimumScaleFactor(0.01)
+                    .aspectRatio(1, contentMode: .fit)
             }
-            .opacity(isFaceUp ? 1 : 0)
+            .opacity(card.isFaceUp ? 1 : 0)
             base
                 .fill()// the fill is basically the default, we don't need it
-                .opacity(isFaceUp ? 0 : 1)
-            
-        }
-        .onTapGesture {
-            isFaceUp.toggle()// = !isFaceUp
+                .opacity(card.isFaceUp ? 0 : 1)
         }
     }
 }
@@ -62,7 +69,8 @@ struct CardView: View {
 
 
 
-
-#Preview {
-    EmojiMemoryGameView()
+struct EmojiMemoryGameView_Previews: PreviewProvider {
+    static var previews: some View {
+        EmojiMemoryGameView(viewModel: EmojiMemoryGame())
+    }
 }
