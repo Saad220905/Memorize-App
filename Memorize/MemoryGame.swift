@@ -20,19 +20,39 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
         }
     }
     
-    mutating func choose(_ card: Card) {
-        let chosenIndex = index(of: card)
-        cards[chosenIndex].isFaceUp.toggle()
+    //to prevent the initializer from complaining about not setting all the vars
+    var indexOfTheOneAndOnlyFaceUpCard  : Int? {
+        get { cards.indices.filter {index in cards[index].isFaceUp}.only }
+        set { cards.indices.forEach {cards[$0].isFaceUp = (newValue == $0)} }
     }
     
-    func index(of card: Card) -> Int {
+    mutating func choose(_ card: Card) {
+        if let chosenIndex = cards.firstIndex(where: {$0.id == card.id}) {
+            if !cards[chosenIndex].isFaceUp && !cards[chosenIndex].isMatched {
+                if let potentialMatchIndex = indexOfTheOneAndOnlyFaceUpCard  {
+                    if cards[chosenIndex].content == cards[potentialMatchIndex].content {
+                        cards[chosenIndex].isMatched = true
+                        cards[potentialMatchIndex].isMatched = true
+                    }
+                } else {
+                    indexOfTheOneAndOnlyFaceUpCard = chosenIndex
+                }
+                cards[chosenIndex].isFaceUp = true
+            }
+            
+        }
+    }
+/*
+    private func index(of card: Card) -> Int? { //question mark indicates that it doesn't hace to be an int
         for index in cards.indices {
             if cards[index].id == card.id {
                 return index
             }
         }
-        return 0 //FIXME: keep in mind that you can't return 0 if you can't find it
+        return nil
     }
+*/
+
     
     mutating func shuffle() {
         cards.shuffle()
@@ -46,7 +66,7 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
         }
         //this equality function may/can be deleted as swift can automatically take care of it.
         
-        var isFaceUp: Bool = true
+        var isFaceUp: Bool = false
         var isMatched: Bool = false
         let content: CardContent
         
@@ -56,5 +76,12 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
             "\(id): \(content) \(isFaceUp ? "up" : "down") \(isMatched ? "matched" : "")"
             //you don't need to put "return" infront of the code
         }
+    }
+}
+
+
+extension Array {
+    var only : Element? {
+        count == 1 ? first : nil
     }
 }

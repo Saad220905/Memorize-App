@@ -65,6 +65,7 @@ struct CardView: View {
                 .fill()// the fill is basically the default, we don't need it
                 .opacity(card.isFaceUp ? 0 : 1)
         }
+        .opacity(card.isFaceUp || !card.isMatched ? 1 : 0)
     }
 }
 
