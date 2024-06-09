@@ -13,12 +13,12 @@ struct EmojiMemoryGameView: View {
     //@ObservedObject basically says that if something changed,
     //redraw me.
 
+    let aspectRatio : CGFloat = 2/3
+    
     var body: some View {
         VStack {
-            ScrollView {
-                cards
-                    .animation(.default, value: viewModel.cards)
-            }
+            cards
+                .animation(.default, value: viewModel.cards)
             Button("shuffle") {
                 viewModel.shuffle()
             }
@@ -26,49 +26,19 @@ struct EmojiMemoryGameView: View {
         .padding()
     }
     
-    var cards: some View {
-        LazyVGrid (columns: [GridItem(.adaptive(minimum: 85), spacing: 0)], spacing: 0) {
-            ForEach(viewModel.cards) { card in
-                CardView(card)
-                    .aspectRatio(2/3, contentMode: .fit)
-                    .padding(4)
-                    .onTapGesture {
-                        viewModel.choose(card)
-                    }
-            }
+    //you'd have to write @ViewBuilder to prevent the function from complaining about
+    //not having a return type
+    private var cards: some View {
+        AspectVGrid(viewModel.cards, aspectRatio : aspectRatio) { card in
+            CardView(card)
+                .padding(4)
+                .onTapGesture {
+                    viewModel.choose(card)
+                }
         }
         .foregroundColor(Color.orange)
     }
 }
-//every var in a struct that's called has to be assigned a value,
-//either in its struct or in the call.
-struct CardView: View {
-    let card: MemoryGame<String>.Card
-    
-    init(_ card: MemoryGame<String>.Card) {
-        self.card = card
-    }
-    
-    var body: some View {
-        ZStack (alignment: .top) {
-            let base = RoundedRectangle(cornerRadius: 12) //an example of a local variable
-            Group {
-                base.foregroundColor(.white)
-                base.strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10,2]))
-                Text(card.content)
-                    .font(.system(size: 200))
-                    .minimumScaleFactor(0.01)
-                    .aspectRatio(1, contentMode: .fit)
-            }
-            .opacity(card.isFaceUp ? 1 : 0)
-            base
-                .fill()// the fill is basically the default, we don't need it
-                .opacity(card.isFaceUp ? 0 : 1)
-        }
-        .opacity(card.isFaceUp || !card.isMatched ? 1 : 0)
-    }
-}
-
 
 
 
