@@ -16,29 +16,19 @@ struct CardView: View {
     }
     
     var body: some View {
-        ZStack (alignment: .center) {
-            let base = RoundedRectangle(cornerRadius: 12) //an example of a local variable
-            Group {
-                base.fill(.white)
-                base.strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10,2]))
-                Pie(endAngle: .degrees(240))
-                    .opacity(0.4)
-                    .overlay(
-                        Text(card.content)
-                            .font(.system(size: 200))
-                            .minimumScaleFactor(0.01)
-                            .multilineTextAlignment(.center)
-                            .aspectRatio(1, contentMode: .fit)
-                            .padding(5)
-                    )
+        Pie(endAngle: .degrees(240))
+            .opacity(0.4)
+            .overlay(
+                Text(card.content)
+                    .font(.system(size: 200))
+                    .minimumScaleFactor(0.01)
+                    .multilineTextAlignment(.center)
+                    .aspectRatio(1, contentMode: .fit)
                     .padding(5)
-            }
-            .opacity(card.isFaceUp ? 1 : 0)
-            base
-                .fill()// the fill is basically the default, we don't need it
-                .opacity(card.isFaceUp ? 0 : 1)
-        }
-        .opacity(card.isFaceUp || !card.isMatched ? 1 : 0)
+            )
+            .padding(5)
+            .cardify(isFaceUp: card.isFaceUp)
+            .opacity(card.isFaceUp || !card.isMatched ? 1 : 0)
     }
 }
 
