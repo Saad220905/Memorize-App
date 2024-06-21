@@ -9,6 +9,7 @@ import Foundation
 
 struct MemoryGame<CardContent> where CardContent: Equatable {
     private(set) var cards: Array<Card>
+    private(set) var score = 0
     
     init(numberOfPairsOfCards: Int, cardContentFactory: (Int) -> CardContent) {
         cards = []
@@ -33,6 +34,14 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
                     if cards[chosenIndex].content == cards[potentialMatchIndex].content {
                         cards[chosenIndex].isMatched = true
                         cards[potentialMatchIndex].isMatched = true
+                        score += 2
+                    } else {
+                        if cards[chosenIndex].hasBeenSeen {
+                            score -= 1
+                        }
+                        if cards[potentialMatchIndex].hasBeenSeen {
+                            score -= 1
+                        }
                     }
                 } else {
                     indexOfTheOneAndOnlyFaceUpCard = chosenIndex
@@ -42,37 +51,44 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
             
         }
     }
-/*
-    private func index(of card: Card) -> Int? { //question mark indicates that it doesn't hace to be an int
-        for index in cards.indices {
-            if cards[index].id == card.id {
-                return index
-            }
-        }
-        return nil
-    }
-*/
-
+    /*
+     private func index(of card: Card) -> Int? { //question mark indicates that it doesn't hace to be an int
+     for index in cards.indices {
+     if cards[index].id == card.id {
+     return index
+     }
+     }
+     return nil
+     }
+     */
+    
     
     mutating func shuffle() {
         cards.shuffle()
         print(cards)
     }
     
-    struct Card: Equatable, Identifiable, CustomDebugStringConvertible {
+    struct Card: Equatable, Identifiable, CustomStringConvertible {
         
         static func == (lhs: Card, rhs: Card) -> Bool {
             return lhs.isFaceUp == rhs.isFaceUp && lhs.isMatched == rhs.isMatched && lhs.content == rhs.content
         }
         //this equality function may/can be deleted as swift can automatically take care of it.
         
-        var isFaceUp: Bool = false
+        var isFaceUp: Bool = false {
+            didSet {
+                if oldValue && !isFaceUp {
+                    hasBeenSeen = true
+                }
+            }
+        }
+        var hasBeenSeen: Bool = false
         var isMatched: Bool = false
         let content: CardContent
         
         var id: String
         
-        var debugDescription: String {
+        var description: String {
             "\(id): \(content) \(isFaceUp ? "up" : "down") \(isMatched ? "matched" : "")"
             //you don't need to put "return" infront of the code
         }
