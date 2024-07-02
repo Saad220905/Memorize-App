@@ -8,13 +8,12 @@
 import SwiftUI
 
 struct FlyingNumber: View {
-    let number : Int
+    let number: Int
     
     @State private var offset: CGFloat = 0
     
-    
     var body: some View {
-        if number != 0 { // to prevent 0's from just randomly popping up
+        if number != 0 {
             Text(number, format: .number.sign(strategy: .always()))
                 .font(.largeTitle)
                 .foregroundColor(number < 0 ? .red : .green)
@@ -32,7 +31,10 @@ struct FlyingNumber: View {
         }
     }
 }
-
-#Preview {
-    FlyingNumber(number: 5)
+/*
+struct FlyingNumber_Previews: PreviewProvider {
+    static var previews: some View {
+        FlyingNumber(number: 5)
+    }
 }
+*/

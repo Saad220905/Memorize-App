@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-struct AspectVGrid<Item, ItemView>: View where Item: Identifiable, ItemView : View {
-    var items : [Item]
-    var aspectRatio : CGFloat = 1
-    var content : (Item) -> ItemView
+struct AspectVGrid<Item: Identifiable, ItemView: View>: View {
+    let items: [Item]
+    var aspectRatio: CGFloat = 1
+    let content: (Item) -> ItemView
     
     init(_ items: [Item], aspectRatio: CGFloat, @ViewBuilder content: @escaping (Item) -> ItemView) {
         self.items = items
@@ -20,8 +20,12 @@ struct AspectVGrid<Item, ItemView>: View where Item: Identifiable, ItemView : Vi
     
     var body: some View {
         GeometryReader { geometry in
-            let GridItemSize : CGFloat = gridItemWidthThatFits(count: items.count, size: geometry.size, atAspectRatio : aspectRatio)
-            LazyVGrid (columns: [GridItem(.adaptive(minimum: GridItemSize), spacing: 0)], spacing: 0) {
+            let gridItemSize = gridItemWidthThatFits(
+                count: items.count,
+                size: geometry.size,
+                atAspectRatio: aspectRatio
+            )
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: gridItemSize), spacing: 0)], spacing: 0) {
                 ForEach(items) { item in
                     content(item)
                         .aspectRatio(aspectRatio, contentMode: .fit)
@@ -30,12 +34,17 @@ struct AspectVGrid<Item, ItemView>: View where Item: Identifiable, ItemView : Vi
         }
     }
     
-    func gridItemWidthThatFits (count : Int, size : CGSize,atAspectRatio aspectRatio : CGFloat) -> CGFloat {
+    private func gridItemWidthThatFits(
+        count: Int,
+        size: CGSize,
+        atAspectRatio aspectRatio: CGFloat
+    ) -> CGFloat {
         let count = CGFloat(count)
         var columnCount = 1.0
         repeat {
             let width = size.width / columnCount
             let height = width / aspectRatio
+            
             let rowCount = (count / columnCount).rounded(.up)
             if rowCount * height < size.height {
                 return (size.width / columnCount).rounded(.down)

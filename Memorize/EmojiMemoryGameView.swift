@@ -11,22 +11,24 @@ struct EmojiMemoryGameView: View {
     typealias Card = MemoryGame<String>.Card
     
     @ObservedObject var viewModel: EmojiMemoryGame
-    
-    //@ObservedObject basically says that if something changed,
-    //redraw me.
-    
-    let aspectRatio : CGFloat = 2/3
+        
+    private let aspectRatio: CGFloat = 2/3
+    private let spacing: CGFloat = 4
+    private let dealAnimation: Animation = .easeInOut(duration: 1)
+    private let dealInterval: TimeInterval = 0.15
+    private let deckWidth: CGFloat = 50
     
     var body: some View {
         VStack {
-            cards
-                .foregroundColor(.clear)
-            //.animation(.default, value: viewModel.cards)
+            cards.foregroundColor(viewModel.color)
             HStack {
                 score
                 Spacer()
+                deck.foregroundColor(viewModel.color)
+                Spacer()
                 shuffle
             }
+            .font(.title)
         }
         .padding()
     }
@@ -37,47 +39,84 @@ struct EmojiMemoryGameView: View {
     }
     
     private var shuffle: some View {
-        Button("shuffle") {
-            withAnimation() { // default animation being used
+        Button("Shuffle") {
+            withAnimation {
                 viewModel.shuffle()
             }
         }
     }
     
-    
-    //you'd have to write @ViewBuilder to prevent the function from complaining about
-    //not having a return type
     private var cards: some View {
-        AspectVGrid(viewModel.cards, aspectRatio : aspectRatio) { card in
-            CardView(card)
-                .padding(4)
-                .overlay(FlyingNumber(number: scoreChange(causedBy: card)))
-                .zIndex(scoreChange(causedBy: card) != 0 ? 1 : 0)
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.5)) {
-                        let scoreBeforeChoosing = viewModel.score
-                        viewModel.choose(card)
-                        let scoreChange = viewModel.score - scoreBeforeChoosing
-                        lastScoreChange = (scoreChange, causedByCardId: card.id)
+        AspectVGrid(viewModel.cards, aspectRatio: aspectRatio) { card in
+            if isDealt(card) {
+                view(for: card)
+                    .padding(spacing)
+                    .overlay(FlyingNumber(number: scoreChange(causedBy: card)))
+                    .zIndex(scoreChange(causedBy: card) != 0 ? 100 : 0)
+                    .onTapGesture {
+                        choose(card)
                     }
-                }
+            }
         }
-        .foregroundColor(Color.orange)
     }
     
-    //@State private var lastScoreChange: (amount: Int, causedByCardId: Card.ID) = (amount: 0, causedByCardId: "")
-    @State private var lastScoreChange = (0, causedByCardId: "")
+    private func view(for card: Card) -> some View {
+        CardView(card)
+            .matchedGeometryEffect(id: card.id, in: dealingNamespace)
+            .transition(.asymmetric(insertion: .identity, removal: .identity))
+    }
     
+    private func choose(_ card: Card) {
+        withAnimation {
+            let scoreBeforeChoosing = viewModel.score
+            viewModel.choose(card)
+            let scoreChange = viewModel.score - scoreBeforeChoosing
+            lastScoreChange = (scoreChange, causedByCardId: card.id)
+        }
+    }
+    
+    @State private var lastScoreChange = (0, causedByCardId: "")
     
     private func scoreChange(causedBy card: Card) -> Int {
         let (amount, id) = lastScoreChange
         return card.id == id ? amount : 0
     }
+    
+    // MARK: - Dealing from a Deck
+    
+    @State private var dealt = Set<Card.ID>()
+    
+    private func isDealt(_ card: Card) -> Bool {
+        dealt.contains(card.id)
+    }
+    private var undealtCards: [Card] {
+        viewModel.cards.filter { !isDealt($0) }
+    }
+    
+    @Namespace private var dealingNamespace
+    
+    private var deck: some View {
+        ZStack {
+            ForEach(undealtCards) { card in
+                view(for: card)
+            }
+        }
+        .frame(width: deckWidth, height: deckWidth / aspectRatio)
+        .onTapGesture {
+            deal()
+        }
+    }
+    
+    private func deal() {
+        var delay: TimeInterval = 1.5
+        for card in viewModel.cards {
+            withAnimation(dealAnimation.delay(delay)) {
+                _ = dealt.insert(card.id)
+            }
+            delay += dealInterval
+        }
+    }
 }
-
-
-
-
 
 struct EmojiMemoryGameView_Previews: PreviewProvider {
     static var previews: some View {

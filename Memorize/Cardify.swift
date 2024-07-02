@@ -7,41 +7,43 @@
 
 import SwiftUI
 
-struct Cardify : ViewModifier, Animatable {
+struct Cardify: ViewModifier, Animatable {
     init(isFaceUp: Bool) {
         rotation = isFaceUp ? 0 : 180
     }
     
-    var isFaceUp : Bool {
+    var isFaceUp: Bool {
         rotation < 90
     }
-    
+
     var rotation: Double
+    
     var animatableData: Double {
-        get { return rotation }
+        get { rotation }
         set { rotation = newValue }
     }
     
-    
-    func body(content : Content) -> some View {
-        ZStack (alignment: .center) {
-            let base = RoundedRectangle(cornerRadius: 12) //an example of a local variable
-            base.strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10,2]))
+    func body(content: Content) -> some View {
+        ZStack {
+            let base = RoundedRectangle(cornerRadius: Constants.cornerRadius)
+            base.strokeBorder(lineWidth: Constants.lineWidth)
                 .background(base.fill(.white))
                 .overlay(content)
                 .opacity(isFaceUp ? 1 : 0)
-            base
-                .fill()// the fill is basically the default, we don't need it
+            base.fill()
                 .opacity(isFaceUp ? 0 : 1)
         }
         .rotation3DEffect(.degrees(rotation), axis: (0,1,0))
-        //    .animation(.linear(duration: 3), value: isFaceUp)
+    }
+    
+    private struct Constants {
+        static let cornerRadius: CGFloat = 12
+        static let lineWidth: CGFloat = 2
     }
 }
 
-
 extension View {
-    func cardify(isFaceUp : Bool) -> some View {
-        return self.modifier(Cardify(isFaceUp: isFaceUp))  //you don't really need to put the return and the self.
+    func cardify(isFaceUp: Bool) -> some View {
+        modifier(Cardify(isFaceUp: isFaceUp))
     }
 }
